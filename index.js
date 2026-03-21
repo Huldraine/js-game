@@ -1,13 +1,12 @@
 const canvas = document.querySelector('canvas')
 const c = canvas.getContext('2d')
+let touche = ''
 
 canvas.width = 1024
 canvas.height = 576
 
-c.fillRect(0, 0, canvas.width, canvas.height)
-
 class Sprite {
-   constructor({position, velocity}) {
+   constructor(position, velocity) {
         this.position = position
         this.velocity = velocity
    } 
@@ -23,20 +22,49 @@ const player = new Sprite({
     y: 0
 })
 
-player.draw()
-
 const enemy = new Sprite({
     x: 400,
     y: 100
 })
 
-enemy.draw()
-
-console.log(player)
+document.addEventListener('keydown', (event) => {
+    touche = event.key;
+});
 
 function animate() {
     window.requestAnimationFrame(animate)
-    console.log('go')
+    
+    c.fillStyle = 'black'
+    c.fillRect(0, 0, canvas.width, canvas.height)
+
+    if (touche === 'z'){
+        player.position.y -= 10
+    }
+    if (touche === 'q'){
+        player.position.x -= 10
+    }
+    if (touche === 's'){
+        player.position.y += 10
+    }
+    if (touche === 'd'){
+        player.position.x += 10
+    }
+
+    if (touche === 'ArrowUp'){
+    player.position.y -= 10
+    }
+    if (touche === 'ArrowLeft'){
+        player.position.x -= 10
+    }
+    if (touche === 'ArrowDown'){
+        player.position.y += 10
+    }
+        if (touche === 'ArrowRight'){
+        player.position.x += 10
+    }
+    player.draw()
+    enemy.draw()
+    touche = ''
 }
 
 animate()
