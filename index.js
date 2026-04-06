@@ -22,42 +22,12 @@ function resizeCanvas() {
 resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
 
-function loadSprite(path) {
-  const image = new Image();
-  image.src = path;
-  return image;
-}
-
 function drawSpriteImage(sprite, x, y, width, height) {
-  if (!sprite || !sprite.complete || sprite.naturalWidth <= 0) return false;
-  c.drawImage(sprite, x, y, width, height);
-  return true;
+  // Sprites désactivés - retour au rendu géométrique
+  return false;
 }
 
-const SPRITES = {
-  roomFloor: loadSprite("kenney_tiny-dungeon/gTiles/sol.png"),
-  roomWallTop: loadSprite("kenney_tiny-dungeon/gTiles/mur-haut.png"),
-  roomWallBottom: loadSprite("kenney_tiny-dungeon/gTiles/mur-bas.png"),
-  roomWallLeft: loadSprite("kenney_tiny-dungeon/gTiles/mur_gauche.png"),
-  roomWallRight: loadSprite("kenney_tiny-dungeon/gTiles/mur_droit.png"),
-  roomCornerTopLeft: loadSprite(
-    "kenney_tiny-dungeon/gTiles/coin_haut-gauche.png",
-  ),
-  roomCornerTopRight: loadSprite(
-    "kenney_tiny-dungeon/gTiles/coin_haut-droit.png",
-  ),
-  roomCornerBottomLeft: loadSprite(
-    "kenney_tiny-dungeon/gTiles/coin_bas-gauche.png",
-  ),
-  roomCornerBottomRight: loadSprite(
-    "kenney_tiny-dungeon/gTiles/coin_bas-droit.png",
-  ),
-  roomDoor: loadSprite("kenney_tiny-dungeon/gTiles/porte.png"),
-  player: loadSprite("kenney_tiny-dungeon/gTiles/character.png"),
-  enemy: loadSprite("kenney_tiny-dungeon/gTiles/enemy.png"),
-  boss: loadSprite("kenney_tiny-dungeon/gTiles/boss.png"),
-  trap: loadSprite("kenney_tiny-dungeon/gTiles/trappe.png"),
-};
+const SPRITES = {};
 
 const state = {
   phase: "explore",
@@ -606,7 +576,7 @@ function spawnProjectile(mode, x, y, vx, vy, radius = 0.018) {
 }
 
 function randomMode() {
-  const modes = ["white", "orange", "blue"];
+  const modes = ["white", "red", "blue"];
   return modes[randInt(0, modes.length - 1)];
 }
 
@@ -785,9 +755,9 @@ function updateEnemyDodge(dt) {
     const dist = Math.hypot(p.x - dodge.soul.x, p.y - dodge.soul.y);
     if (dist >= p.radius + dodge.soul.size / 600 || dodge.iFrame > 0) continue;
     const hurtsWhite = p.mode === "white";
-    const hurtsOrange = p.mode === "orange" && dodge.movedThisFrame;
+    const hurtsRed = p.mode === "red" && dodge.movedThisFrame;
     const hurtsBlue = p.mode === "blue" && !dodge.movedThisFrame;
-    if (hurtsWhite || hurtsOrange || hurtsBlue) {
+    if (hurtsWhite || hurtsRed || hurtsBlue) {
       state.player.hp -= 2;
       dodge.iFrame = 0.42;
       if (state.player.hp <= 0) {
