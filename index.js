@@ -40,10 +40,18 @@ const SPRITES = {
   roomWallBottom: loadSprite("kenney_tiny-dungeon/gTiles/mur-bas.png"),
   roomWallLeft: loadSprite("kenney_tiny-dungeon/gTiles/mur_gauche.png"),
   roomWallRight: loadSprite("kenney_tiny-dungeon/gTiles/mur_droit.png"),
-  roomCornerTopLeft: loadSprite("kenney_tiny-dungeon/gTiles/coin_haut-gauche.png"),
-  roomCornerTopRight: loadSprite("kenney_tiny-dungeon/gTiles/coin_haut-droit.png"),
-  roomCornerBottomLeft: loadSprite("kenney_tiny-dungeon/gTiles/coin_bas-gauche.png"),
-  roomCornerBottomRight: loadSprite("kenney_tiny-dungeon/gTiles/coin_bas-droit.png"),
+  roomCornerTopLeft: loadSprite(
+    "kenney_tiny-dungeon/gTiles/coin_haut-gauche.png",
+  ),
+  roomCornerTopRight: loadSprite(
+    "kenney_tiny-dungeon/gTiles/coin_haut-droit.png",
+  ),
+  roomCornerBottomLeft: loadSprite(
+    "kenney_tiny-dungeon/gTiles/coin_bas-gauche.png",
+  ),
+  roomCornerBottomRight: loadSprite(
+    "kenney_tiny-dungeon/gTiles/coin_bas-droit.png",
+  ),
   roomDoor: loadSprite("kenney_tiny-dungeon/gTiles/porte.png"),
   player: loadSprite("kenney_tiny-dungeon/gTiles/character.png"),
   enemy: loadSprite("kenney_tiny-dungeon/gTiles/enemy.png"),
@@ -289,16 +297,36 @@ function findEnemyAt(x, y) {
 function pickEnemyPattern() {
   if (state.floor < 4) {
     // return ["pipe"][randInt(0, 1)];
-    return ["enfer"][randInt(0, 1)];
-    // return ["line", "line", "rain", "burst", "pipe"][randInt(0, 4)];
+    // return ["enfer"][randInt(0, 1)];
+    return ["line", "line", "rain", "burst", "pipe"][randInt(0, 4)];
   }
   if (state.floor < 8) {
     return ["line", "rain", "burst", "pipe", "enfer"][randInt(0, 4)];
   }
   return ["rain", "burst", "line", "spiral", "pipe"][randInt(0, 4)];
 }
+function pickBossPattern() {
+  return ["spiral", "enfer"][randInt(0, 1)];
+}
+
+const sounds = {};
+function playSound(src, loop = false) {
+  if (!sounds[src]) {
+    sounds[src] = new Audio(src);
+    sounds[src].loop = loop;
+  }
+  sounds[src].currentTime = 0;
+  sounds[src].play().catch(() => {});
+}
 
 function resetFloor() {
+  if (state.floor > 1) {
+    if (Math.random() < 0.5) {
+      state.player.maxHp += 2;
+    } else {
+      state.player.bonusDamage += 1;
+    }
+  }
   const roomList = generateDungeon();
   state.rooms = roomList;
   state.roomMap = {};
@@ -307,6 +335,8 @@ function resetFloor() {
   state.battle = null;
   state.trap = null;
   state.phase = "explore";
+
+  playSound("musique de fond.mp3");
 
   for (const room of roomList) {
     state.roomMap[room.id] = room;
@@ -339,8 +369,8 @@ function resetFloor() {
         x: p.x,
         y: p.y,
         roomId: room.id,
-        hp: 10 + Math.floor(state.floor * 0.8),
-        maxHp: 10 + Math.floor(state.floor * 0.8),
+        hp: 15 + Math.floor(state.floor * 0.8),
+        maxHp: 15 + Math.floor(state.floor * 0.8),
         pattern: pickEnemyPattern(),
         isBoss: false,
       });
@@ -361,7 +391,7 @@ function resetFloor() {
         roomId: farRoom.id,
         hp: 24 + state.floor * 2,
         maxHp: 24 + state.floor * 2,
-        pattern: "spiral",
+        pattern: pickBossPattern(),
         isBoss: true,
       });
     }
@@ -802,7 +832,10 @@ function drawMap() {
       const drawX = OFFSET_X + x * TILE;
       const drawY = OFFSET_Y + y * TILE;
       const isBorder =
-        x === 0 || y === 0 || x === roomDisplayWidth - 1 || y === roomDisplayHeight - 1;
+        x === 0 ||
+        y === 0 ||
+        x === roomDisplayWidth - 1 ||
+        y === roomDisplayHeight - 1;
 
       if (isBorder) {
         const topDoorX = 1 + Math.floor(room.width / 2);
@@ -814,16 +847,27 @@ function drawMap() {
           (x === roomDisplayWidth - 1 && room.doors.right && y === sideDoorY);
         let borderSprite = SPRITES.roomWallTop;
         if (x === 0 && y === 0) borderSprite = SPRITES.roomCornerTopLeft;
-        else if (x === roomDisplayWidth - 1 && y === 0) borderSprite = SPRITES.roomCornerTopRight;
-        else if (x === 0 && y === roomDisplayHeight - 1) borderSprite = SPRITES.roomCornerBottomLeft;
+        else if (x === roomDisplayWidth - 1 && y === 0)
+          borderSprite = SPRITES.roomCornerTopRight;
+        else if (x === 0 && y === roomDisplayHeight - 1)
+          borderSprite = SPRITES.roomCornerBottomLeft;
         else if (x === roomDisplayWidth - 1 && y === roomDisplayHeight - 1) {
           borderSprite = SPRITES.roomCornerBottomRight;
         } else if (y === 0) borderSprite = SPRITES.roomWallTop;
-        else if (y === roomDisplayHeight - 1) borderSprite = SPRITES.roomWallBottom;
+        else if (y === roomDisplayHeight - 1)
+          borderSprite = SPRITES.roomWallBottom;
         else if (x === 0) borderSprite = SPRITES.roomWallLeft;
         else borderSprite = SPRITES.roomWallRight;
 
-        if (!drawSpriteImage(isDoor ? SPRITES.roomDoor : borderSprite, drawX, drawY, TILE, TILE)) {
+        if (
+          !drawSpriteImage(
+            isDoor ? SPRITES.roomDoor : borderSprite,
+            drawX,
+            drawY,
+            TILE,
+            TILE,
+          )
+        ) {
           c.fillStyle = isDoor ? "#5f7ea8" : "#3f4350";
           c.fillRect(drawX, drawY, TILE, TILE);
         }
@@ -831,7 +875,15 @@ function drawMap() {
         const rx = x - 1;
         const ry = y - 1;
         const isFloor = room.grid[ry] && room.grid[ry][rx] === TILE_FLOOR;
-        if (!drawSpriteImage(isFloor ? SPRITES.roomFloor : SPRITES.roomWallTop, drawX, drawY, TILE, TILE)) {
+        if (
+          !drawSpriteImage(
+            isFloor ? SPRITES.roomFloor : SPRITES.roomWallTop,
+            drawX,
+            drawY,
+            TILE,
+            TILE,
+          )
+        ) {
           c.fillStyle = isFloor ? "#1f2230" : "#3f4350";
           c.fillRect(drawX, drawY, TILE, TILE);
         }
